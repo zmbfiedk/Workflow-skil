@@ -3,8 +3,9 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float speed = 5f; // Movement speed of the player
+     float runspeed;
     public float jumpHeight = 5f; // How high the player can jump
-    public float groundDistance = 0.4f; // Distance to check if the player is grounded
+     float groundDistance = 1.4f; // Distance to check if the player is grounded
     public LayerMask groundMask; // Mask to define what is considered the ground
     public Transform groundCheck; // Reference to the ground check object (empty GameObject beneath the player)
 
@@ -18,6 +19,7 @@ public class PlayerMovement : MonoBehaviour
         // Get the Rigidbody component attached to the player
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Prevent the player from rotating when moving
+        runspeed = speed * 1.5f;
     }
 
     void Update()
@@ -28,8 +30,10 @@ public class PlayerMovement : MonoBehaviour
 
         // Check if player is grounded using a raycast (checking if player is on the ground)
         isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundDistance, groundMask);
-
         // Handle jumping when player is grounded
+        Debug.DrawLine(groundCheck.position, Vector3.down, Color.red);
+
+        Debug.Log(isGrounded);
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
         {
             Jump();
@@ -47,9 +51,17 @@ public class PlayerMovement : MonoBehaviour
         // Create movement vector (ignoring vertical movement for now)
         Vector3 movement = new Vector3(movementInputX, 0f, movementInputZ);
         movement = transform.TransformDirection(movement); // Convert local space to world space
+        float currentspeed = speed;
 
+
+
+        if (Input.GetKey(KeyCode.LeftShift)) // sprint and sprint speed
+        {
+            currentspeed = runspeed;
+            //Debug.Log(currentspeed);
+        }
         // Apply movement to Rigidbody (preserve current vertical speed)
-        rb.velocity = new Vector3(movement.x * speed, rb.velocity.y, movement.z * speed);
+        rb.velocity = new Vector3(movement.x * currentspeed, rb.velocity.y, movement.z * currentspeed);
     }
 
     void Jump()
@@ -59,5 +71,8 @@ public class PlayerMovement : MonoBehaviour
 
         // Apply an upward force (impulse) for jumping
         rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+
+        Debug.Log("jump");
+
     }
 }

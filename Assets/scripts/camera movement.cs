@@ -27,10 +27,10 @@ public class CameraMovement : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -verticalRotationLimit, verticalRotationLimit); // Clamp the vertical rotation
 
         // Apply the vertical rotation to the camera (pitch)
-        transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f); // Rotate camera vertically (up/down)
+        transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f); // Rotate camera vertically (up/down)
 
         // Rotate the player body horizontally (left/right)
         yRotation += mouseX; // Add horizontal mouse movement to the current horizontal rotation
-        playerBody.localRotation = Quaternion.Euler(0f, yRotation, 0f); // Rotate the player body horizontally (yaw)
+        playerBody.rotation = Quaternion.Euler(0f, yRotation, 0f); // Rotate the player body horizontally (yaw)
     }
 }
