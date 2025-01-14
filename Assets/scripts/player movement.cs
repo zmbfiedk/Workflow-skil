@@ -1,7 +1,9 @@
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+[RequireComponent(typeof(Rigidbody))]
+public class PlayerController : MonoBehaviour
 {
+
     public float speed = 5f; // Movement speed of the player
      float runspeed;
     public float jumpHeight = 5f; // How high the player can jump
@@ -9,21 +11,32 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask groundMask; // Mask to define what is considered the ground
     public Transform groundCheck; // Reference to the ground check object (empty GameObject beneath the player)
 
-    private Rigidbody rb; // Reference to the Rigidbody component
-    private bool isGrounded; // Whether the player is grounded or not
-    private float movementInputX;
-    private float movementInputZ;
+
+  // Spawn Variables
+    public float playerSetX;
+    public float playerSetY;
+    public float playerSetZ;
+    // Movement Variables
+    public float moveSpeed = 5f;        // Speed of movement
+    public float playerJumpHeight = 2f; // Jump height
+    private Rigidbody rb;
+
+    // Camera reference (optional for forward movement direction)
+    public Camera playerCamera;
 
     void Start()
     {
-        // Get the Rigidbody component attached to the player
+        // Get the Rigidbody component for physics-based movement
         rb = GetComponent<Rigidbody>();
+
         rb.freezeRotation = true; // Prevent the player from rotating when moving
         runspeed = speed * 1.5f;
+
     }
 
     void Update()
     {
+
         // Read player input for horizontal (A/D or Left/Right Arrow) and vertical (W/S or Up/Down Arrow) movement
         movementInputX = Input.GetAxis("Horizontal");
         movementInputZ = Input.GetAxis("Vertical");
@@ -42,12 +55,14 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Handle movement in FixedUpdate to sync with physics engine
+   
+
         MovePlayer();
     }
 
     void MovePlayer()
     {
+
         // Create movement vector (ignoring vertical movement for now)
         Vector3 movement = new Vector3(movementInputX, 0f, movementInputZ);
         movement = transform.TransformDirection(movement); // Convert local space to world space
@@ -62,10 +77,39 @@ public class PlayerMovement : MonoBehaviour
         }
         // Apply movement to Rigidbody (preserve current vertical speed)
         rb.velocity = new Vector3(movement.x * currentspeed, rb.velocity.y, movement.z * currentspeed);
+
+        // Get input from keyboard (WASD or Arrow Keys)
+        float moveHorizontal = Input.GetAxis("Horizontal"); // A/D or Left/Right Arrow
+        float moveVertical = Input.GetAxis("Vertical");     // W/S or Up/Down Arrow
+
+        // Get camera forward and right directions
+        Vector3 forward = playerCamera.transform.forward;
+        Vector3 right = playerCamera.transform.right;
+
+        // Make sure we ignore the Y component of the vectors (we don't want vertical movement from the camera's tilt)
+        forward.y = 0f;
+        right.y = 0f;
+
+        // Normalize the directions to avoid faster diagonal movement
+        forward.Normalize();
+        right.Normalize();
+
+        // Calculate movement vector relative to camera's view direction
+        Vector3 moveDirection = (forward * moveVertical + right * moveHorizontal).normalized;
+
+        // Apply movement to the Rigidbody (physics-based)
+        rb.MovePosition(transform.position + moveDirection * moveSpeed * Time.deltaTime);
+
+        // Jumping (only allow jumping if on the ground)
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Jump();
+        }
     }
 
     void Jump()
     {
+
         // Reset Y velocity before applying jump to prevent upward speed overlap
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // Reset Y velocity to ensure clean jump
 
@@ -73,6 +117,13 @@ public class PlayerMovement : MonoBehaviour
         rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
 
         Debug.Log("jump");
+
+
+        // Apply a force to simulate jumping (only if the player is on the ground)
+        if (Mathf.Abs(rb.velocity.y) < 0.01f) // Check if player is grounded
+        {
+            rb.AddForce(Vector3.up * playerJumpHeight, ForceMode.Impulse);
+        }
 
     }
 }
